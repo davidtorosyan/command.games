@@ -18,12 +18,16 @@
     'use strict';
 
     // automatically navigates to the kingdom card selection page
-    const DEVELOPER_MODE = false;
+    const DEVELOPER_MODE = window.DEVELOPER_MODE;
 
     // setup the helper library
     const console = monkeymaster.setupConsole('command.games');
     console.log('Loaded');
     monkeymaster.setupJobs('command.games');
+
+    if (DEVELOPER_MODE) {
+        console.log('Running in developer mode');
+    }
 
     /* dominionrandomizer.com */
 

@@ -1,6 +1,6 @@
 // ==LibraryScript==
 // @name         monkeymaster
-// @namespace    https://github.com/davidtorosyan/monkeymaster
+// @namespace    https://github.com/davidtorosyan/command.games
 // @version      1.0.0
 // @description  common library for TamperMonkey
 // @author       David Torosyan
