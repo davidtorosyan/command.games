@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         command.games
 // @namespace    https://github.com/davidtorosyan/command.games
-// @version      1.1.0
+// @version      1.1.1
 // @description  improve dominion.games
 // @author       David Torosyan
 // @match        https://dominion.games/
@@ -138,7 +138,7 @@
             const $randomize = $('<input type="button" class="lobby-button random-kingdom" style="font-size:1.2vw;" value="Random!"></input>');
             $randomize.on('click', tryRandomize);
 
-            const tooltipText = 'Button added by <a target="_blank" href="https://github.com/davidtorosyan/command.games">command.games</a>. Requests and issues go <a target="_blank" href="https://github.com/davidtorosyan/command.games/issues">here</a>! <br><br> Thanks to Dominion Randomizer for powering this button. Visit <a target="_blank" href="https://dominionrandomizer.com/">dominionrandomizer.com</a> to configure your preferences.';
+            const tooltipText = 'Button added by <a target="_blank" href="https://github.com/davidtorosyan/command.games">command.games</a>, powered by <a target="_blank" href="https://dominionrandomizer.com/">Dominion Randomizer</a>. Visit to configure preferences.';
             const $tooltip = $(`<div class="tooltip"><span class="tooltiptext" style="left:-50%; top: initial; bottom:100%; width:200%; font-size: 1.2vw;">${tooltipText}</span></div>`);
             $tooltip.append($randomize);
             $tooltip.insertAfter($clearButton);
@@ -153,7 +153,7 @@
         }
         randomizerCancelTokenSource = monkeymaster.cancelTokenSource();
         const $randomize = $('.random-kingdom');
-        $randomize.val('Running...');
+        $randomize.val('Running!');
         randomize(randomizerCancelTokenSource.getToken(), () => {
             $randomize.val('Random!');
         });
