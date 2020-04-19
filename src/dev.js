@@ -1,7 +1,6 @@
 // ==LibraryScript==
 // @name         dev
 // @namespace    https://github.com/davidtorosyan/command.games
-// @version      1.0.0
 // @description  simple helper to improve dev work
 // @author       David Torosyan
 // ==/LibraryScript==

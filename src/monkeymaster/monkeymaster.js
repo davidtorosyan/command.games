@@ -11,7 +11,6 @@
 // @grant        GM_removeValueChangeListener
 // ==/LibraryScript==
 
-// once this library is mature, it can be moved out into its own repo
 const monkeymaster = {};
 
 (function() {
