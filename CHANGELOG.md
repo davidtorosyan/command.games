@@ -29,3 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - command.games userscript and monkeymaster library
 - extends https://dominion.games/ to have a "Random!" button during card selection
+
+[unreleased]: https://github.com/davidtorosyan/command.games/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/davidtorosyan/command.games/compare/v1.1.0...v1.1.1
+[1.1.0]: https://github.com/davidtorosyan/command.games/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/davidtorosyan/command.games/releases/tag/v1.0.0
