@@ -17,7 +17,7 @@ Install [TamperMonkey](https://www.tampermonkey.net/) to your favorite web brows
 
 Begin authoring a userscript, and include monkeymaster.js as a requirement:
 ```javascript
-// @require      https://github.com/davidtorosyan/command.games/raw/monkeymaster-v1.0.0/src/monkeymaster/monkeymaster.js
+// @require      https://github.com/davidtorosyan/command.games/raw/monkeymaster-v1.1.0/src/monkeymaster/monkeymaster.js
 ```
 
 Take note of the version you're importing, and check the [changelog](CHANGELOG.md) for updates.
