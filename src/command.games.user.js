@@ -1,17 +1,19 @@
 // ==UserScript==
 // @name         command.games
 // @namespace    https://github.com/davidtorosyan/command.games
-// @version      1.2.0
+// @version      1.2.1
 // @description  improve dominion.games
 // @author       David Torosyan
 // @match        https://dominion.games/
 // @match        https://dominionrandomizer.com/*
 // @require      https://code.jquery.com/jquery-3.4.1.min.js
-// @require      https://github.com/davidtorosyan/command.games/raw/monkeymaster-v1.0.0/src/monkeymaster/monkeymaster.js
+// @require      https://github.com/davidtorosyan/command.games/raw/monkeymaster-v1.1.0/src/monkeymaster/monkeymaster.js
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_addValueChangeListener
 // @grant        GM_removeValueChangeListener
+// @grant        GM_deleteValue
+// @grant        GM_listValues
 // ==/UserScript==
 
 (function() {

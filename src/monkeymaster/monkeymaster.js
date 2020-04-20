@@ -1,7 +1,7 @@
 // ==LibraryScript==
 // @name         monkeymaster
 // @namespace    https://github.com/davidtorosyan/command.games
-// @version      1.0.0
+// @version      1.1.0
 // @description  common library for TamperMonkey
 // @author       David Torosyan
 // @require      https://code.jquery.com/jquery-3.4.1.min.js
@@ -95,54 +95,24 @@ const monkeymaster = {};
     // @grant        GM_getValue
     // @grant        GM_addValueChangeListener
     // @grant        GM_removeValueChangeListener
+    // @grant        GM_removeValueChangeListener
+    // @grant        GM_deleteValue
+    // @grant        GM_listValues
     */
+
+    const jobPrefix = 'mmj:';
 
     function formatJobUrl(url, jobId) { 
         // TODO Support existing query params in jobs module: https://github.com/davidtorosyan/command.games/issues/2
         return `${url}?jobId=${jobId}`;
     }
 
-    function formatJobResultKey(jobId) { 
-        return `${jobId}_result`;
+    function formatJobRequestKey(jobId) { 
+        return `${jobPrefix}${jobId}:request`
     }
 
-    function formatJobParamKey(jobId) { 
-        return `${jobId}_param"`
-    }
-
-    function formatJobNamespaceKey(jobId) { 
-        return `${jobId}_namespace"`
-    }
-
-    function setJobNamespace(jobId, namespace) { 
-        GM_setValue(formatJobNamespaceKey(jobId), namespace);
-    }
-
-    function setJobParam(jobId, param) { 
-        GM_setValue(formatJobParamKey(jobId), param);
-    }
-
-    function setJobResult(jobId, retval) {
-        GM_setValue(formatJobResultKey(jobId), retval);
-    }
-
-    function getJobNamespace(jobId) {
-        return GM_getValue(formatJobNamespaceKey(jobId));
-    }
-
-    function getJobParam(jobId) {
-        return GM_getValue(formatJobParamKey(jobId));
-    }
-
-    function getJobResult(jobId) {
-        return GM_getValue(formatJobResultKey(jobId));
-    }
-
-    function createJobResultListener(jobId, callback) {
-        return GM_addValueChangeListener(formatJobResultKey(jobId), (name, _, new_value) => {
-            console.log(`Completed job: ${jobId}`);
-            callback(new_value);
-        });
+    function formatJobResponseKey(jobId) { 
+        return `${jobPrefix}${jobId}:response`;
     }
 
     function createJobId() {
@@ -170,11 +140,41 @@ const monkeymaster = {};
         return seconds * 1000; 
     }
 
-    function cleanupJob(listener_id, jobId) {
-        console.debug(`Cleaning up job: ${jobId}`);
-        GM_removeValueChangeListener(listener_id);
+    function cleanupJob(jobId) {
+        console.log(`Cleaning up job: ${jobId}`);
+        const request = GM_getValue(formatJobRequestKey(jobId));
+        if (request === undefined) {
+            console.log(`Job already cleaned up: ${jobId}`);
+            return;
+        }
+        GM_removeValueChangeListener(request.listenerId);
+        GM_deleteValue(formatJobRequestKey(jobId));
+        GM_deleteValue(formatJobResponseKey(jobId));
         $(`#${jobId}`).remove();
     }
+
+    // Clean up old job data.
+    // @param number expiryInMs: How old data should be (in milliseconds) to get cleaned up
+    function cleanupJobStorage(expiryInMs) {
+        const expirationDate = new Date(new Date() - expiryInMs);
+        console.log(`Deleting job data older than ${expirationDate.toJSON()}`);
+        let found = 0;
+        let deleted = 0;
+        for (let name of GM_listValues()) {
+            if (name.indexOf(jobPrefix) !== 0) {
+                continue;
+            }
+            found++;
+            const jobDate = GM_getValue(name).date;
+            if (new Date(jobDate) < expirationDate) {
+                console.log(`Deleting stale job data '${name}' from ${jobDate}`);
+                GM_deleteValue(name);
+                deleted++;
+            }
+        }
+        console.log(`Found ${found} job data and deleted ${deleted}`);
+    }
+    lib.cleanupJobStorage = cleanupJobStorage;
 
     function testPermissions() {
         // TODO Test permissions in job module: https://github.com/davidtorosyan/command.games/issues/3
@@ -210,21 +210,33 @@ const monkeymaster = {};
     //  object param: a parameter to pass to the job
     //  number cleanupDelayMs: how long to wait before cleaning the iFrame and listener, defaults to 15 seconds. Use -1 to skip cleanup.
     //  string namespace: the unique identifier for these jobs, not required if setupJobs is used
+    //  bool skipCleanupOnCompletion: if true, don't clean up as soon as the job completes
     function queueJob(url, callback, options = {}) {
         // setup
         const param = options.param;
         const cleanupDelayMs = options.cleanupDelayMs === undefined ? secondsToMilliseconds(15) : options.cleanupDelayMs;
         const namespace = options.namespace || defaultJobNamespace;
+        const skipCleanupOnCompletion = options.skipCleanupOnCompletion === true;
         assertSetup(namespace);
 
         // create job metadata and listener
         const jobId = createJobId();
         console.log(`Creating job: ${jobId}`);
-        setJobNamespace(jobId, namespace);
-        if (param !== undefined) {
-            setJobParam(jobId, param);
-        }
-        const listener_id = createJobResultListener(jobId, callback);
+        const listenerId = GM_addValueChangeListener(formatJobResponseKey(jobId), (name, _, response) => {
+            console.log(`Completed job: ${jobId}`);
+            if (!skipCleanupOnCompletion) {
+                cleanupJob(jobId);
+            }
+            callback(response.result);
+        });
+
+        const request = {
+            namespace,
+            param,
+            listenerId,
+            date: new Date().toJSON()
+        };
+        GM_setValue(formatJobRequestKey(jobId), request);
         
         // add the iFrame
         // TODO Remove dependency on jQuery from monkeymaster jobs module: https://github.com/davidtorosyan/command.games/issues/1
@@ -238,7 +250,7 @@ const monkeymaster = {};
 
         // cleanup
         if (cleanupDelayMs !== -1) {
-            setTimeout(() => cleanupJob(listener_id, jobId), cleanupDelayMs);
+            setTimeout(() => cleanupJob(jobId), cleanupDelayMs);
         }
     }
     lib.queueJob = queueJob;
@@ -263,17 +275,20 @@ const monkeymaster = {};
             console.log('No jobId found')
             return
         }
-        const jobType = getJobNamespace(jobId);
-        if (jobType !== namespace) {
-            console.log(`Skipping job ${jobId} from '${jobType}', expected '${namespace}'`);
+        const request = GM_getValue(formatJobRequestKey(jobId));
+        if (request.namespace !== namespace) {
+            console.log(`Skipping job ${jobId} from '${request.namespace}', expected '${namespace}'`);
             return;
         }
 
         // execute
         console.log(`Executing job: ${jobId}`);
-        const param = getJobParam(jobId);
-        callback(param, result => {
-            setJobResult(jobId, result);
+        callback(request.param, result => {
+            const response = {
+                result,
+                date: new Date().toJSON()
+            };
+            GM_setValue(formatJobResponseKey(jobId), response);
         });
     }
     lib.executeJob = executeJob;
