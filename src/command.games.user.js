@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         command.games
 // @namespace    https://github.com/davidtorosyan/command.games
-// @version      1.2.1
+// @version      1.2.2
 // @description  improve dominion.games
 // @author       David Torosyan
-// @match        https://dominion.games/
+// @match        https://dominion.games/*
 // @match        https://dominionrandomizer.com/*
 // @require      https://code.jquery.com/jquery-3.4.1.min.js
 // @require      https://github.com/davidtorosyan/command.games/raw/monkeymaster-v1.1.0/src/monkeymaster/monkeymaster.js
