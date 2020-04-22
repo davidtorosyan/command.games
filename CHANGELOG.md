@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fixed dominion.games URL matching
+- Fixed dominion.games URL matching.
 
 ## [1.2.1] - 2020-04-19
 
@@ -48,7 +48,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - command.games userscript and monkeymaster library
 - extends https://dominion.games/ to have a "Random!" button during card selection
 
-[unreleased]: https://github.com/davidtorosyan/command.games/compare/v1.2.1...HEAD
+[unreleased]: https://github.com/davidtorosyan/command.games/compare/v1.2.2...HEAD
+[1.2.2]: https://github.com/davidtorosyan/command.games/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/davidtorosyan/command.games/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/davidtorosyan/command.games/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/davidtorosyan/command.games/compare/v1.1.0...v1.1.1
