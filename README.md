@@ -24,7 +24,9 @@ Find dominionrandomizer on GitHub: https://github.com/blakevanlan/KingdomCreator
 
 Install [TamperMonkey](https://www.tampermonkey.net/) to your favorite web browser.
 
-Navigate to [command.games.user.js](src/command.games.user.js), click "Raw", then click "Install".
+Once that's done, click [here](https://github.com/davidtorosyan/command.games/raw/master/src/command.games.user.js) to install the script!
+
+Alternatively, navigate to [command.games.user.js](src/command.games.user.js), click "Raw", then click "Install".
 
 ## Usage
 
