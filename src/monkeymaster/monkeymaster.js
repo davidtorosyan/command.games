@@ -1,7 +1,7 @@
 // ==LibraryScript==
 // @name         monkeymaster
 // @namespace    https://github.com/davidtorosyan/command.games
-// @version      1.1.0
+// @version      1.2.0
 // @description  common library for TamperMonkey
 // @author       David Torosyan
 // @require      https://code.jquery.com/jquery-3.4.1.min.js
@@ -46,6 +46,7 @@ const monkeymaster = {};
 
     /* Query params */
 
+    // @deprecated in favor of getWindowQueryParam and setWindowQueryParam
     // Get the value of a query param.
     // @param string name: the name of the query param
     // @param bool remove: whether or not to remove the query param after reading it
@@ -63,6 +64,111 @@ const monkeymaster = {};
         return '';
     }
     lib.getQueryParameter = getQueryParameter;
+
+    // Get the value of a query param.
+    // @param string url: the url to get from
+    // @param string key: the name of the query param
+    // @returns string: the value of the query param, empty string if no value, undefined if not present
+    function getQueryParam(url, key) {
+        const encodedKey = encodeURIComponent(key);
+
+        const startOfQueryString = url.indexOf('?');
+        if (startOfQueryString !== -1) {
+            const queryString = url.substring(startOfQueryString+1);
+            for (let keyValuePair of queryString.split('&')) {
+                if (keyValuePair === '') {
+                    continue;
+                }
+                const startOfEquals = keyValuePair.indexOf('=');
+                let existingKey = keyValuePair;
+                let val = '';
+                if (startOfEquals !== -1) {
+                    existingKey = keyValuePair.substring(0, startOfEquals);
+                    val = keyValuePair.substring(startOfEquals+1);
+                }
+                if (existingKey === encodedKey) {
+                    return decodeURIComponent(val);
+                }
+            }
+        }
+
+        return undefined;
+    }
+    lib.getQueryParam = getQueryParam;
+
+    // Get the value of a query param on the current page.
+    // @param string key: the name of the query param
+    // @returns string: the value of the query param
+    function getWindowQueryParam(key) {
+        return getQueryParam(window.location.href, key);
+    }
+    lib.getWindowQueryParam = getWindowQueryParam;
+
+    // Add a query param to a url, or replace it if it already exists.
+    // @param string url: the url to change
+    // @param string key: the query param key
+    // @param string val: the query param value, empty to not set, undefined to remove
+    // @returns string: the new url
+    function setQueryParam(url, key, val) {
+        const encodedKey = encodeURIComponent(key);
+        let param = undefined;
+        if (val !== undefined) {
+            const encodedVal = encodeURIComponent(val);
+            param = encodedVal !== '' ? `${encodedKey}=${encodedVal}` : encodedKey;
+        }
+
+        const startOfQueryString = url.indexOf('?');
+        let baseUrl = url;
+        let queryString = '';
+        if (startOfQueryString !== -1) {
+            baseUrl = url.substring(0, startOfQueryString);
+            queryString = url.substring(startOfQueryString+1);
+        }
+
+        const pairs = [];
+        let added = false;
+        for (let keyValuePair of queryString.split('&')) {
+            if (keyValuePair === '') {
+                continue;
+            }
+            const startOfEquals = keyValuePair.indexOf('=');
+            let existingKey = keyValuePair;
+            let existingVal = '';
+            if (startOfEquals !== -1) {
+                existingKey = keyValuePair.substring(0, startOfEquals);
+                existingVal = keyValuePair.substring(startOfEquals+1);
+            }
+            if (existingKey === encodedKey) {
+                if (!added && param !== undefined) {
+                    pairs.push(param);
+                    added = true;
+                }
+            }
+            else {
+                pairs.push(keyValuePair);
+            }
+        }
+
+        if (!added && param !== undefined) {
+            pairs.push(param);
+            added = true;
+        }
+
+        return pairs.length > 0 ? `${baseUrl}?${pairs.join('&')}` : baseUrl;
+    }
+    lib.setQueryParam = setQueryParam;
+
+    // Add a query param to the page's url, or replace it if it already exists.
+    // @param string key: the query param key
+    // @param string val: the query param value, empty to not set, undefined to remove
+    function setWindowQueryParam(key, val) {
+        const relativeUrl = window.location.pathname + window.location.search;
+        const newPath = setQueryParam(relativeUrl, key, val);
+        if (relativeUrl !== newPath) {
+            window.history.replaceState(null, null, newPath);
+        }
+    }
+    lib.setWindowQueryParam = setWindowQueryParam;
 
     /* Cancellation */
 
@@ -101,10 +207,10 @@ const monkeymaster = {};
     */
 
     const jobPrefix = 'mmj:';
+    const jobIdQueryParam = 'mmj_job';
 
     function formatJobUrl(url, jobId) { 
-        // TODO Support existing query params in jobs module: https://github.com/davidtorosyan/command.games/issues/2
-        return `${url}?jobId=${jobId}`;
+        return setQueryParam(url, jobIdQueryParam, jobId);
     }
 
     function formatJobRequestKey(jobId) { 
@@ -210,13 +316,15 @@ const monkeymaster = {};
     //  object param: a parameter to pass to the job
     //  number cleanupDelayMs: how long to wait before cleaning the iFrame and listener, defaults to 15 seconds. Use -1 to skip cleanup.
     //  string namespace: the unique identifier for these jobs, not required if setupJobs is used
-    //  bool skipCleanupOnCompletion: if true, don't clean up as soon as the job completes
+    //  @deprecated bool skipCleanupOnCompletion: if true, don't clean up as soon as the job completes
+    //  number completionCleanupDelayMs: how long to wait before cleaning up, undefined means instant, -1 means skip cleanup.
     function queueJob(url, callback, options = {}) {
         // setup
         const param = options.param;
         const cleanupDelayMs = options.cleanupDelayMs === undefined ? secondsToMilliseconds(15) : options.cleanupDelayMs;
         const namespace = options.namespace || defaultJobNamespace;
         const skipCleanupOnCompletion = options.skipCleanupOnCompletion === true;
+        const completionCleanupDelayMs = options.completionCleanupDelayMs;
         assertSetup(namespace);
 
         // create job metadata and listener
@@ -224,8 +332,13 @@ const monkeymaster = {};
         console.log(`Creating job: ${jobId}`);
         const listenerId = GM_addValueChangeListener(formatJobResponseKey(jobId), (name, _, response) => {
             console.log(`Completed job: ${jobId}`);
-            if (!skipCleanupOnCompletion) {
-                cleanupJob(jobId);
+            if (!skipCleanupOnCompletion && completionCleanupDelayMs !== -1) {
+                if (completionCleanupDelayMs === undefined) {
+                    cleanupJob(jobId);
+                }
+                else {
+                    setTimeout(() => cleanupJob(jobId), completionCleanupDelayMs);
+                }
             }
             callback(response.result);
         });
@@ -237,7 +350,7 @@ const monkeymaster = {};
             date: new Date().toJSON()
         };
         GM_setValue(formatJobRequestKey(jobId), request);
-        
+
         // add the iFrame
         // TODO Remove dependency on jQuery from monkeymaster jobs module: https://github.com/davidtorosyan/command.games/issues/1
         const $frame = $('<iframe>', { 
@@ -264,15 +377,20 @@ const monkeymaster = {};
     // @param func callback: a function to execute when a job is found
     // @param object options:
     //  string namespace: the unique identifier for these jobs, not required if setupJobs is used
+    //  func nojob: a function to execute when no job is found
     function executeJob(callback, options = {}) {
         // setup
         const namespace = options.namespace || defaultJobNamespace;
+        const nojob = options.nojob;
         assertSetup(namespace);
 
         // detect a job
-        const jobId = getQueryParameter('jobId');
+        const jobId = getWindowQueryParam(jobIdQueryParam);
         if (!jobId) {
             console.log('No jobId found')
+            if (nojob !== undefined) {
+                nojob();
+            }
             return
         }
         const request = GM_getValue(formatJobRequestKey(jobId));
