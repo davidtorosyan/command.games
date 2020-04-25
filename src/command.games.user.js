@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         command.games
 // @namespace    https://github.com/davidtorosyan/command.games
-// @version      1.3.0
+// @version      1.3.1
 // @description  improve dominion.games
 // @author       David Torosyan
 // @match        https://dominion.games/*
@@ -152,7 +152,8 @@
             $randomize.on('click', tryRandomize);
 
             const url = setTrackingParams(randomizerUrl, 'link');
-            const tooltipText = `Button added by <a target="_blank" href="https://github.com/davidtorosyan/command.games">command.games</a>, powered by <a target="_blank" href="${url}">Dominion Randomizer</a>. Visit to configure preferences.`;
+            const version = `v${GM_info.script.version}`;
+            const tooltipText = `Button added by <a target="_blank" href="https://github.com/davidtorosyan/command.games">command.games</a> ${version}, powered by <a target="_blank" href="${url}">Dominion Randomizer</a>. Visit to configure preferences.`;
             const $tooltip = $(`<div class="tooltip"><span class="tooltiptext" style="left:-50%; top: initial; bottom:100%; width:200%; font-size: 1.2vw;">${tooltipText}</span></div>`);
             $tooltip.append($randomize);
             $tooltip.insertAfter($clearButton);
