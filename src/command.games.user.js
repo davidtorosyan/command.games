@@ -1,19 +1,20 @@
 // ==UserScript==
 // @name         command.games
 // @namespace    https://github.com/davidtorosyan/command.games
-// @version      1.2.2
+// @version      1.3.0
 // @description  improve dominion.games
 // @author       David Torosyan
 // @match        https://dominion.games/*
 // @match        https://dominionrandomizer.com/*
 // @require      https://code.jquery.com/jquery-3.4.1.min.js
-// @require      https://github.com/davidtorosyan/command.games/raw/monkeymaster-v1.1.0/src/monkeymaster/monkeymaster.js
+// @require      https://github.com/davidtorosyan/command.games/raw/monkeymaster-v1.2.0/src/monkeymaster/monkeymaster.js
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_addValueChangeListener
 // @grant        GM_removeValueChangeListener
 // @grant        GM_deleteValue
 // @grant        GM_listValues
+// @grant        GM_info
 // ==/UserScript==
 
 (function() {
@@ -46,7 +47,15 @@
                     callback(getCardList());
                 });
             });
+        }, {
+            nojob: removeTrackingParams
         });
+
+        function removeTrackingParams() {
+            monkeymaster.setWindowQueryParam('utm_source');
+            monkeymaster.setWindowQueryParam('utm_medium');
+            monkeymaster.setWindowQueryParam('utm_term');
+        }
 
         // make sure that sets not included in dominion.games are not considered
         function ensureDeprecatedSetsAreUnchecked(callback) {
@@ -106,11 +115,11 @@
         }
 
         function getBool(name) {
-            return monkeymaster.getQueryParameter(name) == 1;
+            return monkeymaster.getWindowQueryParam(name) == 1;
         }
 
         function getList(name) {
-            return monkeymaster.getQueryParameter(name).split(',');
+            return (monkeymaster.getWindowQueryParam(name) ?? '').split(',');
         }
 
         // important! return to avoid running the rest of the script
@@ -118,6 +127,8 @@
     }
 
     /* dominion.games */
+
+    const randomizerUrl = 'https://dominionrandomizer.com/';
 
     // main
     $(document).ready(function() {
@@ -140,7 +151,8 @@
             const $randomize = $('<input type="button" class="lobby-button random-kingdom" style="font-size:1.2vw;" value="Random!"></input>');
             $randomize.on('click', tryRandomize);
 
-            const tooltipText = 'Button added by <a target="_blank" href="https://github.com/davidtorosyan/command.games">command.games</a>, powered by <a target="_blank" href="https://dominionrandomizer.com/">Dominion Randomizer</a>. Visit to configure preferences.';
+            const url = setTrackingParams(randomizerUrl, 'link');
+            const tooltipText = `Button added by <a target="_blank" href="https://github.com/davidtorosyan/command.games">command.games</a>, powered by <a target="_blank" href="${url}">Dominion Randomizer</a>. Visit to configure preferences.`;
             const $tooltip = $(`<div class="tooltip"><span class="tooltiptext" style="left:-50%; top: initial; bottom:100%; width:200%; font-size: 1.2vw;">${tooltipText}</span></div>`);
             $tooltip.append($randomize);
             $tooltip.insertAfter($clearButton);
@@ -165,7 +177,8 @@
     function randomize(cancelToken, callback) {
         console.log('Random!');
         clearCards();
-        monkeymaster.queueJob('https://dominionrandomizer.com/', result => {
+        const url = setTrackingParams(randomizerUrl, 'button');
+        monkeymaster.queueJob(url, result => {
             cancelToken.throwIfCanceled();
 
             // get the response
@@ -185,6 +198,8 @@
             setButton('Colonies', getButtonLabel(result.cards.colonies));
             setButton('Shelters', getButtonLabel(result.cards.shelters));
             selectCards(originalCardNames, cancelToken, callback);
+        }, {
+            completionCleanupDelayMs: 100 // give analytics a chance to fire
         });
     }
 
@@ -193,6 +208,14 @@
         $('.clear-kingdom').click();
         // delete the landscape cards
         $('.selection-symbol').click()
+    }
+
+    function setTrackingParams(url, medium) {
+        let retval = url;
+        retval = monkeymaster.setQueryParam(retval, 'utm_source', 'command.games');
+        retval = monkeymaster.setQueryParam(retval, 'utm_medium', medium);
+        retval = monkeymaster.setQueryParam(retval, 'utm_term', `v${GM_info.script.version}`);
+        return retval;
     }
     
     function getOriginalCardNames(normalizedCardNames) {
