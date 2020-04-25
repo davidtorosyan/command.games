@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         command.games
 // @namespace    https://github.com/davidtorosyan/command.games
-// @version      1.3.1
+// @version      1.4.0
 // @description  improve dominion.games
 // @author       David Torosyan
 // @match        https://dominion.games/*
@@ -132,13 +132,51 @@
 
     // main
     $(document).ready(function() {
-        setup();
+        setupRandom();
+        setupBackground();
         if (DEVELOPER_MODE) {
-            navigate();
+            // navigateRandom();
+            navigateOptions();
         }
     });
 
-    function setup() {
+    function setupBackground() {
+        $.onExists('div[ng-if="lobby.tab.userPrefTab"]', () => {
+            console.debug('Found preferences');
+
+            const $label = $('label:contains("Preferred background")');
+            const $pref = $label.next();
+            const $input = $pref.find('input');
+
+            const $img = $('<img src="swamp-hag.jpg" width="400px"></img>');
+            const $text = $('<span class="tooltiptext" style="left:50%; top: initial; bottom:100%; width:auto; font-size: 1.2vw;"></span>');
+            const $tooltip = $(`<div class="tooltip" style="display:block"></div>`);
+            $text.append($img);
+            $tooltip.append($text);
+            $tooltip.append($pref);
+            $tooltip.insertAfter($label);
+
+            function setImage() {
+                // ideally this should come directly from the page's javascript,
+                // but it's not easily accessible
+                const imageList = ['swamp-hag.jpg', 'inheritance.jpg', 'haunted-woods.jpg', 'dungeon.jpg', 'rebuild.jpg', 'adventures.jpg', 'hinterlands.jpg', 'feodum.jpg', 'base.jpg', 'dark-wood.jpg'];
+                const chosen = parseInt($input.val());
+                if (chosen === 0) {
+                    $img.prop('style', 'visibility: hidden;');
+                }
+                else {
+                    const name = imageList[chosen-1];
+                    $img.prop('style', '');
+                    $img.prop('src', `images/large/${name}`);
+                }
+            }
+
+            $input.on('change', setImage);
+            setImage();
+        });
+    }
+
+    function setupRandom() {
         // every time the user navigates to the "choose cards" page,
         $.onExists('.kingdom-choices', () => {
             console.debug('Found kingdom choices');
@@ -349,8 +387,18 @@
         }, 100);
     }
 
+    // test helper, just for getting to the options page easily
+    function navigateOptions() {
+        $.onExists('.lobby-page', () => {
+            // create a table
+            $.onExists('button:contains("Options")', options => {
+                $(options).click();
+            }, { once: true, delayMs: 100 });
+        }, { once: true });
+    }
+
     // test helper, just for getting to the new table page easily
-    function navigate() {
+    function navigateRandom() {
         $.onExists('.lobby-page', () => {
             // create a table
             $.onExists('button:contains("New Table")', myTable => {

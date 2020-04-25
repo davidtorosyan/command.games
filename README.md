@@ -36,5 +36,10 @@ Click "New Table", then "Create Table", then "Select Kingdom Cards".
 
 Hit "Random!" and watch the cards appear!
 
+## Other features
+
+Preview the "preferred background" option:
+![Demo: demo-background.gif](https://github.com/davidtorosyan/command.games/raw/master/images/demo-background.gif)
+
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
