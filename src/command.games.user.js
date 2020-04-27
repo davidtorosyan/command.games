@@ -20,6 +20,9 @@
 (function() {
     'use strict';
 
+    // for tracking
+    let utmSource = 'command.games';
+
     // automatically navigates to the kingdom card selection page
     const DEVELOPER_MODE = window.DEVELOPER_MODE;
 
@@ -30,6 +33,7 @@
 
     if (DEVELOPER_MODE) {
         console.log('Running in developer mode');
+        utmSource += '.dev';
     }
 
     /* dominionrandomizer.com */
@@ -135,8 +139,8 @@
         setupRandom();
         setupBackground();
         if (DEVELOPER_MODE) {
-            // navigateRandom();
-            navigateOptions();
+            navigateRandom();
+            //navigateOptions();
         }
     });
 
@@ -251,7 +255,7 @@
 
     function setTrackingParams(url, medium) {
         let retval = url;
-        retval = monkeymaster.setQueryParam(retval, 'utm_source', 'command.games');
+        retval = monkeymaster.setQueryParam(retval, 'utm_source', utmSource);
         retval = monkeymaster.setQueryParam(retval, 'utm_medium', medium);
         retval = monkeymaster.setQueryParam(retval, 'utm_term', `v${GM_info.script.version}`);
         return retval;
