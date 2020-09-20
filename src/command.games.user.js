@@ -157,13 +157,19 @@
         $.onExists('div[ng-if="lobby.tab.userPrefTab"]', () => {
             console.debug('Found preferences');
 
+            const tooltipId = 'background-tooltip';
+            if ($(`#${tooltipId}`).length) {
+                console.debug('Already set up, skipping background creation.');
+                return;
+            }
+
             const $label = $('label:contains("Preferred background")');
             const $pref = $label.next();
             const $input = $pref.find('input');
 
             const $img = $('<img src="swamp-hag.jpg" width="400px"></img>');
             const $text = $('<span class="tooltiptext" style="left:50%; top: initial; bottom:100%; width:auto; font-size: 1.2vw;"></span>');
-            const $tooltip = $(`<div class="tooltip" style="display:block"></div>`);
+            const $tooltip = $(`<div class="tooltip" id=${tooltipId} style="display:block"></div>`);
             $text.append($img);
             $tooltip.append($text);
             $tooltip.append($pref);
@@ -220,6 +226,12 @@
         $.onExists('.kingdom-choices', () => {
             console.debug('Found kingdom choices');
 
+            const tooltipId = 'random-tooltip';
+            if ($(`#${tooltipId}`).length) {
+                console.debug('Already set up, skipping button creation.');
+                return;
+            }
+
             // rename the "Clear Selection" button to save room
             const $clearButton = $('.clear-kingdom');
             $clearButton.val('Clear');
@@ -232,7 +244,7 @@
             const version = `v${GM_info.script.version}`;
             const tooltipText = `Visit <a target="_blank" href="${url}">Dominion Randomizer</a> to configure preferences.`;
             const smallText = `<a target="_blank" href="https://github.com/davidtorosyan/command.games">${version}</a>`;
-            const $tooltip = $(`<div class="tooltip"><span class="tooltiptext" style="left:-50%; top: initial; bottom:100%; width:200%; font-size: 1.2vw;">${tooltipText}<br><span style="font-size: .7vw;">${smallText}</span></span></div>`);
+            const $tooltip = $(`<div class="tooltip" id="${tooltipId}"><span class="tooltiptext" style="left:-50%; top: initial; bottom:100%; width:200%; font-size: 1.2vw;">${tooltipText}<br><span style="font-size: .7vw;">${smallText}</span></span></div>`);
             $tooltip.append($randomize);
             $tooltip.insertAfter($clearButton);
         });

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix bug where Random! button might get created multiple times.
+
 ## [1.5.0] - 2020-09-20
 
 ### Added
