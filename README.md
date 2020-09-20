@@ -1,9 +1,5 @@
 # command.games
 
-## ⚠️ NOTICE ⚠️ 
-
-command.games is currently broken in Chrome (see [issue](https://github.com/blakevanlan/KingdomCreator/issues/58#issuecomment-695553132) for discussion).
-
 ## Table of contents
 
 - [Introduction](#introduction)
