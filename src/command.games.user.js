@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         command.games
 // @namespace    https://github.com/davidtorosyan/command.games
-// @version      1.4.1
+// @version      1.5.0
 // @description  improve dominion.games
 // @author       David Torosyan
 // @match        https://dominion.games/*
@@ -276,7 +276,10 @@
             // make the selections
             setButton('Colonies', getButtonLabel(result.cards.colonies));
             setButton('Shelters', getButtonLabel(result.cards.shelters));
-            selectCards(originalCardNames, cancelToken, callback);
+            selectCards(originalCardNames, cancelToken);
+            if (callback !== undefined) {
+                callback();
+            }
         }, {
             completionCleanupDelayMs: 100, // give analytics a chance to fire
             skipCleanupOnCompletion: DEVELOPER_MODE && SHOW_IFRAME,
@@ -390,43 +393,10 @@
         return ['Random', 'No', 'Yes'].findIndex(x => x === state);
     }
 
-    function selectCards(cardNames, cancelToken, callback) {
+    function selectCards(cardNames, cancelToken) {
         cancelToken.throwIfCanceled();
-        const head = cardNames[0];
-        const tail = cardNames.slice(1);
-        const finalCallback = tail.length > 0 ? 
-            () => setTimeout(() => selectCards(tail, cancelToken, callback), 100) :
-            callback;
-        selectCard(head, cancelToken, finalCallback);
-    }
-
-    function selectCard(cardName, cancelToken, callback) {
-        // search the card name
         const $searchBar = $('.kingdom-choices input[type=search]');
-        $searchBar.val(cardName).triggerAngular('change').triggerAngular('focus');
-
-        // wait for results to load
-        setTimeout(() => {
-            cancelToken.throwIfCanceled();
-
-            // surround cardName with two spaces on either side
-            // this will uniquely identify the card
-            const $choices = $(`.md-autocomplete-suggestions li:contains("  ${cardName}  ")`);
-
-            // select the card, or log the failure
-            if ($choices.length === 0) {
-                console.log(`Card '${cardName}' not found or is already added`);
-                const clearSearchButton = $('md-autocomplete-wrap button');
-                clearSearchButton.click()
-            }
-            else {
-                $choices.first().click();
-            }
-
-            if (callback !== undefined) {
-                callback();
-            }
-        }, 100);
+        $searchBar.val(cardNames).triggerAngular('change');
     }
 
     // test helper, just for getting to the options page easily

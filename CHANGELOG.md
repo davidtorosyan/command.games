@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2020-09-20
+
+### Added
+
+- Faster card selection!
+
 ## [1.4.1] - 2020-09-19
 
 ### Fixed
@@ -72,7 +78,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - command.games userscript and monkeymaster library
 - extends https://dominion.games/ to have a "Random!" button during card selection
 
-[unreleased]: https://github.com/davidtorosyan/command.games/compare/v1.4.1...HEAD
+[unreleased]: https://github.com/davidtorosyan/command.games/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/davidtorosyan/command.games/compare/v1.4.1...v1.5.0
 [1.4.1]: https://github.com/davidtorosyan/command.games/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/davidtorosyan/command.games/compare/v1.3.1...v1.4.0
 [1.3.1]: https://github.com/davidtorosyan/command.games/compare/v1.3.0...v1.3.1
