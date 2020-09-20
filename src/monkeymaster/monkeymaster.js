@@ -1,7 +1,7 @@
 // ==LibraryScript==
 // @name         monkeymaster
 // @namespace    https://github.com/davidtorosyan/command.games
-// @version      1.2.0
+// @version      1.3.0
 // @description  common library for TamperMonkey
 // @author       David Torosyan
 // @require      https://code.jquery.com/jquery-3.4.1.min.js
@@ -231,9 +231,11 @@ const monkeymaster = {};
         return text;
     }
 
+    const jobContainerId = 'job-container';
+    lib.jobContainerId = jobContainerId;
+
     function getJobContainer() {
         // TODO Remove dependency on jQuery from monkeymaster jobs module: https://github.com/davidtorosyan/command.games/issues/1
-        const jobContainerId = 'job-container';
         let $jobContainer = $('#'+jobContainerId);
         if ($jobContainer.length === 0) {
             $jobContainer = $('<div>', {'id': jobContainerId, 'style': 'display: none;'});

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2020-09-19
+
+### Added
+
+- expose jobContainerId for CSS manipulation
+
 ## [1.2.0] - 2020-04-24
 
 ### Fixed
@@ -41,7 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - monkeymaster library
 
-[unreleased]: https://github.com/davidtorosyan/command.games/compare/monkeymaster-v1.2.0...HEAD
+[unreleased]: https://github.com/davidtorosyan/command.games/compare/monkeymaster-v1.3.0...HEAD
+[1.3.0]: https://github.com/davidtorosyan/command.games/compare/monkeymaster-v1.2.0...v1.3.0
 [1.2.0]: https://github.com/davidtorosyan/command.games/compare/monkeymaster-v1.1.0...v1.2.0
 [1.1.0]: https://github.com/davidtorosyan/command.games/compare/monkeymaster-v1.0.0...monkeymaster-v1.1.0
 [1.0.0]: https://github.com/davidtorosyan/command.games/releases/tag/monkeymaster-v1.0.0
