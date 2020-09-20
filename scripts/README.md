@@ -7,7 +7,7 @@
 3. Update the [CHANGELOG.md](/CHANGELOG.md)
 4. Commit your changes
 5. Run `python scripts/tag_command.py`
-6. Push your changes
+6. Push your changes, and make sure to do `git push tags`
 
 ## monkeymaster
 
@@ -16,4 +16,4 @@
 3. Update the [CHANGELOG.md](/src/monkeymaster/CHANGELOG.md)
 4. Commit your changes
 5. Run `python scripts/tag_monkey.py`
-6. Push your changes
+6. Push your changes, and make sure to do `git push tags`
