@@ -7,7 +7,7 @@
 // @match        https://dominion.games/*
 // @match        https://dominionrandomizer.com/*
 // @require      https://code.jquery.com/jquery-3.4.1.min.js
-// @require      https://github.com/davidtorosyan/command.games/raw/monkeymaster-v1.2.0/src/monkeymaster/monkeymaster.js
+// @require      https://github.com/davidtorosyan/command.games/raw/monkeymaster-v1.3.0/src/monkeymaster/monkeymaster.js
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_addValueChangeListener
@@ -25,6 +25,10 @@
 
     // automatically navigates to the kingdom card selection page
     const DEVELOPER_MODE = window.DEVELOPER_MODE;
+
+    // dev options
+    const SHOW_IFRAME = false;
+    const SHOW_OPTIONS = false;
 
     // setup the helper library
     const console = monkeymaster.setupConsole('command.games');
@@ -136,11 +140,16 @@
 
     // main
     $(document).ready(function() {
+        setupCSS();
         setupRandom();
         setupBackground();
         if (DEVELOPER_MODE) {
-            navigateRandom();
-            //navigateOptions();
+            if (SHOW_OPTIONS) {
+                navigateOptions();
+            }
+            else {
+                navigateRandom();
+            }
         }
     });
 
@@ -178,6 +187,32 @@
             $input.on('change', setImage);
             setImage();
         });
+    }
+
+    function setupCSS() {
+        if (DEVELOPER_MODE && SHOW_IFRAME) {
+            $("<style>")
+            .prop("type", "text/css")
+            .html(`
+                #${monkeymaster.jobContainerId} {
+                    position: sticky;
+                    z-index: 101;
+                    display: block!important;
+                    margin-top: 1500px;
+                    width: 1600px;
+                    height: 1000px;
+                }
+                iframe {
+                    width: 1600px;
+                    height: 1000px;
+                }
+                body, html {
+                    overflow: scroll!important;
+                    height: 3000px!important;
+                }
+            `)
+            .appendTo("head");
+        }
     }
 
     function setupRandom() {
@@ -242,7 +277,9 @@
             setButton('Shelters', getButtonLabel(result.cards.shelters));
             selectCards(originalCardNames, cancelToken, callback);
         }, {
-            completionCleanupDelayMs: 100 // give analytics a chance to fire
+            completionCleanupDelayMs: 100, // give analytics a chance to fire
+            skipCleanupOnCompletion: DEVELOPER_MODE && SHOW_IFRAME,
+            cleanupDelayMs: DEVELOPER_MODE && SHOW_IFRAME ? -1 : undefined,
         });
     }
 
