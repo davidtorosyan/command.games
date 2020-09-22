@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         command.games
 // @namespace    https://github.com/davidtorosyan/command.games
-// @version      1.5.0
+// @version      1.6.0
 // @description  improve dominion.games
 // @author       David Torosyan
 // @match        https://dominion.games/*
 // @match        https://dominionrandomizer.com/*
 // @require      https://code.jquery.com/jquery-3.4.1.min.js
-// @require      https://github.com/davidtorosyan/command.games/raw/monkeymaster-v1.3.0/src/monkeymaster/monkeymaster.js
+// @require      https://github.com/davidtorosyan/command.games/raw/monkeymaster-v1.3.1/src/monkeymaster/monkeymaster.js
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_addValueChangeListener
@@ -163,7 +163,7 @@
                 return;
             }
 
-            const $label = $('label:contains("Preferred background")');
+            const $label = $(`label:contains("${LANGUAGE.getUserPreferences[UserPrefIds.PREFERRED_BACKGROUND]}")`);
             const $pref = $label.next();
             const $input = $pref.find('input');
 
@@ -237,14 +237,14 @@
             $clearButton.val('Clear');
 
             // add a Random! button
-            const $randomize = $('<input type="button" class="lobby-button random-kingdom" style="font-size:1.2vw;" value="Random!"></input>');
+            const $randomize = $(`<input type="button" class="lobby-button random-kingdom" style="font-size:1.2vw;" value="${LANGUAGE.getPhrase[Phrases.RANDOM]}"></input>`);
             $randomize.on('click', tryRandomize);
 
             const url = setTrackingParams(randomizerUrl, 'link');
             const version = `v${GM_info.script.version}`;
-            const tooltipText = `Visit <a target="_blank" href="${url}">Dominion Randomizer</a> to configure preferences.`;
-            const smallText = `<a target="_blank" href="https://github.com/davidtorosyan/command.games">${version}</a>`;
-            const $tooltip = $(`<div class="tooltip" id="${tooltipId}"><span class="tooltiptext" style="left:-50%; top: initial; bottom:100%; width:200%; font-size: 1.2vw;">${tooltipText}<br><span style="font-size: .7vw;">${smallText}</span></span></div>`);
+            const tooltipText = `${LANGUAGE.getTabLabels[LobbyTabs.OPTIONS]}:<br> <a target="_blank" href="${url}">Dominion Randomizer</a>`;
+            const smallText = `command.games <a target="_blank" href="https://github.com/davidtorosyan/command.games">${version}</a>`;
+            const $tooltip = $(`<div class="tooltip" id="${tooltipId}"><span class="tooltiptext" style="left:-50%; top: initial; bottom:100%; width:200%; font-size: 1.0vw;">${tooltipText}<br><br><span style="font-size: .7vw;">${smallText}</span></span></div>`);
             $tooltip.append($randomize);
             $tooltip.insertAfter($clearButton);
         });
@@ -258,9 +258,9 @@
         }
         randomizerCancelTokenSource = monkeymaster.cancelTokenSource();
         const $randomize = $('.random-kingdom');
-        $randomize.val('Running!');
+        $randomize.val(LANGUAGE.getTableStatus[TableStati.RUNNING]);
         randomize(randomizerCancelTokenSource.getToken(), () => {
-            $randomize.val('Random!');
+            $randomize.val(LANGUAGE.getPhrase[Phrases.RANDOM]);
         });
     }
 
@@ -286,8 +286,8 @@
             const originalCardNames = getOriginalCardNames(cards);
 
             // make the selections
-            setButton('Colonies', getButtonLabel(result.cards.colonies));
-            setButton('Shelters', getButtonLabel(result.cards.shelters));
+            setButton(LANGUAGE.getLobbyButtons.SELECT_COLONIES, getButtonLabel(result.cards.colonies));
+            setButton(LANGUAGE.getLobbyButtons.SELECT_SHELTERS, getButtonLabel(result.cards.shelters));
             selectCards(originalCardNames, cancelToken);
             if (callback !== undefined) {
                 callback();
@@ -368,17 +368,18 @@
     }
 
     function getButtonLabel(bool) {
-        return bool ? 'Yes' : 'No';
+        const field = bool ? TernaryField.YES : TernaryField.NO;
+        return LANGUAGE.getTernaryFieldTexts[field];
     }
 
     function setButton(name, val) {
-        const $btn = $(`three-valued-button[label="${name}: "] button`);
+        const $btn = $(`three-valued-button[label="${name}"] button`);
 
         // dominion.games has a bug where calling "Clear Selection" resets the state of the buttons,
         // but they appear to not change. So we first click the button to force a re-render.
         $btn.click();
 
-        const current = getButtonValue($btn, name);
+        const current = getButtonValue($btn);
         let state = convertButtonState(current);
         const desired = convertButtonState(val);
         if (desired === -1 || state === -1) {
@@ -397,12 +398,16 @@
         }
     }
 
-    function getButtonValue($btn, name) {
-        return $btn.text().trim().substring(name.length+3);
+    function getButtonValue($btn) {
+        return $btn.text().split(':')[1].trim();
     }
 
     function convertButtonState(state) {
-        return ['Random', 'No', 'Yes'].findIndex(x => x === state);
+        return [
+            LANGUAGE.getTernaryFieldTexts[TernaryField.RANDOM], 
+            LANGUAGE.getTernaryFieldTexts[TernaryField.NO], 
+            LANGUAGE.getTernaryFieldTexts[TernaryField.YES]
+        ].findIndex(x => x === state);
     }
 
     function selectCards(cardNames, cancelToken) {
@@ -415,7 +420,7 @@
     function navigateOptions() {
         $.onExists('.lobby-page', () => {
             // create a table
-            $.onExists('button:contains("Options")', options => {
+            $.onExists(`button:contains("${LANGUAGE.getTabLabels[LobbyTabs.OPTIONS]}")`, options => {
                 $(options).click();
             }, { once: true, delayMs: 100 });
         }, { once: true });
@@ -425,16 +430,16 @@
     function navigateRandom() {
         $.onExists('.lobby-page', () => {
             // create a table
-            $.onExists('button:contains("New Table")', myTable => {
-                $(myTable).click();
+            $.onExists(`button:contains("${LANGUAGE.getLobbyButtons.NEW_TABLE}")`, newTable => {
+                $(newTable).click();
                 // set 6 player minimum to avoid people joining
                 $('.rule-number-selectors option[label="6"]').prop('selected', true)
                 angular.element($('.rule-number-selectors select')[0]).triggerHandler('change');
-                $.onExists('button:contains("Create Table")', createTable => {
+                $.onExists(`button:contains("${LANGUAGE.getPhrase[Phrases.CREATE_TABLE]}")`, createTable => {
                     $(createTable).click();
                     setTimeout(() => {
                         // select cards
-                        $.onExists('button:contains("Select Kingdom Cards")', selectKingdom => {
+                        $.onExists(`button:contains("${LANGUAGE.getLobbyButtons.SELECT_KINGDOM}")`, selectKingdom => {
                             $(selectKingdom).click();
                         }, { once: true });
                     }, 500);
