@@ -1,7 +1,7 @@
 // ==LibraryScript==
 // @name         monkeymaster
 // @namespace    https://github.com/davidtorosyan/command.games
-// @version      1.3.0
+// @version      1.3.1
 // @description  common library for TamperMonkey
 // @author       David Torosyan
 // @require      https://code.jquery.com/jquery-3.4.1.min.js
@@ -342,7 +342,12 @@ const monkeymaster = {};
                     setTimeout(() => cleanupJob(jobId), completionCleanupDelayMs);
                 }
             }
-            callback(response.result);
+            try {
+                callback(response.result);
+            }
+            catch (ex) {
+                console.error(`Error executing job callback: ${ex}`);
+            }
         });
 
         const request = {
