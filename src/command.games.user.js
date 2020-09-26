@@ -42,10 +42,12 @@
 
     /* dominionrandomizer.com */
 
+    const randomizerDomain = 'dominionrandomizer.com';
+
     // This section handles randomization.
     // It's expected to only run in an iFrame (see monkeymaster.executeJob).
     // Ideally shouldn't impact normal usage of dominionrandomizer.com
-    if (window.location.host.indexOf('dominionrandomizer.com') !== -1) {
+    if (window.location.host.indexOf(randomizerDomain) !== -1) {
         
         // run this callback when a job is found
         // tweak the settings, grab the card list, and return
@@ -136,12 +138,13 @@
 
     /* dominion.games */
 
-    const randomizerUrl = 'https://dominionrandomizer.com/';
+    const randomizerUrl = `https://${randomizerDomain}/`;
 
     // main
     $(document).ready(function() {
         setupCSS();
         setupRandom();
+        setupExport();
         setupBackground();
         if (DEVELOPER_MODE) {
             if (SHOW_OPTIONS) {
@@ -232,11 +235,11 @@
                 return;
             }
 
-            // rename the "Clear Selection" button to save room
+            // // rename the "Clear Selection" button to save room
             const $clearButton = $('.clear-kingdom');
-            $clearButton.val('Clear');
+            // $clearButton.val('Clear');
 
-            // add a Random! button
+            // add a 'Random' button
             const $randomize = $(`<input type="button" class="lobby-button random-kingdom" style="font-size:1.2vw;" value="${LANGUAGE.getPhrase[Phrases.RANDOM]}"></input>`);
             $randomize.on('click', tryRandomize);
 
@@ -248,6 +251,126 @@
             $tooltip.append($randomize);
             $tooltip.insertAfter($clearButton);
         });
+    }
+
+    function setupExport() {
+        // every time the user navigates to the "choose cards" page,
+        $.onExists('.kingdom-choices', $choices => {
+            console.debug('Found kingdom choices');
+
+            // add an 'Export' button
+            const exportText = 'Export'
+            const $export = $(`<input type="button" class="lobby-button export-kingdom" style="font-size:1.2vw;" value="${exportText}"></input>`);
+            $export.on('click', openExport);
+            $export.insertBefore($choices);
+        });
+    }
+
+    function openExport() {
+        const supply = getSelectedCards($('.selected-card .mini-card-art'));
+        const landscapes = getSelectedLandscapesWithType($('.selected-cards .landscape-art'));
+        const colonies = convertButtonState(getButtonValue(buttonWithName(LANGUAGE.getLobbyButtons.SELECT_COLONIES)));
+        const shelters = convertButtonState(getButtonValue(buttonWithName(LANGUAGE.getLobbyButtons.SELECT_SHELTERS)));
+        const url = setTrackingParams(getExportUrl(randomizerUrl, supply, landscapes, colonies, shelters), 'export');
+        console.log(url);
+        openLinkInNewTab(url);
+    }
+
+    function getSelectedCards($cards) {
+        return $.map($cards, getUrlFromCard).map(getSelectedCard).filter(c => c !== undefined);
+    }
+
+    function getSelectedCard(url) {
+        const result = loadCardUrls().get(url);
+        if (result === undefined) {
+            console.error(`Could not find card with url ${url}`);
+        }
+        return result[0];
+    }
+
+    function getSelectedLandscapesWithType($cards) {
+        return $.map($cards, getUrlFromCard).map(getSelectedLandscapeWithType).filter(c => c !== undefined);
+    }
+
+    function getSelectedLandscapeWithType(url) {
+        const result = loadCardUrls().get(url);
+        if (result === undefined) {
+            console.error(`Could not find card with url ${url}`);
+        }
+        return result;
+    }
+
+    function getUrlFromCard(card) {
+        const style = $(card).attr('style');
+        const url = style.substring(style.lastIndexOf('(')+1, style.lastIndexOf(')'));
+        return url;
+    }
+
+    function getExportUrl(url, supply, landscapes, colonies, shelters) {
+        let retval = url;
+        retval = monkeymaster.setQueryParam(retval, 'supply', supply.join(','));
+
+        const grouped = groupBy(landscapes, card => card[1]);
+        console.log(grouped);
+        for (let [landscapeType, cards] of grouped) {
+            const normalizedLandscapeType = getNormalizedLandscapeType(landscapeType);
+            retval = monkeymaster.setQueryParam(retval, normalizedLandscapeType, cards.join(','));
+        }
+
+        if (colonies != 2) {
+            retval = monkeymaster.setQueryParam(retval, 'colonies', colonies);
+        }
+        
+        if (shelters != 2) {
+            retval = monkeymaster.setQueryParam(retval, 'shelters', shelters);
+        }
+        
+        return retval;
+    }
+
+    function getNormalizedLandscapeType(landscapeType) {
+        return landscapeType
+            .toLowerCase()
+            + 's';
+    }
+
+    function groupBy(list, keyGetter) {
+        const map = new Map();
+        list.forEach((item) => {
+             const key = keyGetter(item);
+             const collection = map.get(key);
+             if (!collection) {
+                 map.set(key, [item]);
+             } else {
+                 collection.push(item);
+             }
+        });
+        return map;
+    }    
+
+    function openLinkInNewTab(url) {
+        $('<a />',{'href': url, 'target': '_blank'}).get(0).click();
+    }
+
+    let cachedCardUrls;
+    function loadCardUrls() {
+        if (cachedCardUrls === undefined) {
+            cachedCardUrls = getCardUrls();
+        }
+        return cachedCardUrls;
+    }
+
+    function getCardUrls() {
+        const cardUrls = new Map()
+        for (let cardName in CardNames) {
+            const card = CardNames[cardName];
+            const url = getFullArtURL(card);
+            const normalized = getNormalizedName(card.name);
+            const type = card.types[0];
+            const typeName = type !== undefined ? type.name : undefined;
+            cardUrls.set(url, [normalized, typeName]);
+        }
+        return cardUrls;
     }
 
     // run randomization, making sure that running processes are canceled
@@ -318,51 +441,53 @@
         return normalizedCardNames.map(getOriginalCardName).filter(c => c !== undefined);
     }
 
-    let cachedCardNames;
     function getOriginalCardName(normalizedCardName) {
-        if (cachedCardNames === undefined) {
-            cachedCardNames = getCardNames();
-        }
-        const result = cachedCardNames.get(normalizedCardName);
+        const result = loadCardNames().get(normalizedCardName);
         if (result === undefined) {
             console.error(`Could not find card with name ${normalizedCardName}`);
         }
         return result;
     }
 
+    let cachedCardNames;
+    function loadCardNames() {
+        if (cachedCardNames === undefined) {
+            cachedCardNames = getCardNames();
+        }
+        return cachedCardNames;
+    }
+
     function getCardNames() {
-        const splitCardNames = getSplitCardNames();
         const cardNames = new Map()
         for (let card in CardNames) {
             const cardName = CardNames[card].name;
             const localizedCard = LANGUAGE.getCardName[cardName];
             if (localizedCard !== undefined) {
-                const splitCardName = splitCardNames.get(cardName);
-                const finalCardName = splitCardName !== undefined ?
-                    splitCardName :
-                    cardName;
-                const normalized = getNormalizedName(finalCardName);
+                const normalized = getNormalizedName(cardName);
                 cardNames.set(normalized, localizedCard.singular);
             }
         }
         return cardNames;
     }
 
-    // these cards don't normalize well, so convert them manually
-    function getSplitCardNames() {
-        return new Map([
-            ['Encampment', 'Encampment/Plunder'],
-            ['Patrician', 'Patrician/Emporium'],
-            ['Settlers', 'Settlers/Bustling Village'],
-            ['Catapult', 'Catapult/Rocks'],
-            ['Gladiator', 'Gladiator/Fortune'],
-            ['Sauna', 'Sauna/Avanto'],
-        ]);
-    }
+    const splitCardNames = new Map([
+        ['Encampment', 'Encampment/Plunder'],
+        ['Patrician', 'Patrician/Emporium'],
+        ['Settlers', 'Settlers/Bustling Village'],
+        ['Catapult', 'Catapult/Rocks'],
+        ['Gladiator', 'Gladiator/Fortune'],
+        ['Sauna', 'Sauna/Avanto'],
+    ]);
 
     function getNormalizedName(cardName) {
+        // some cards don't normalize well, so convert them first
+        const splitCardName = splitCardNames.get(cardName);
+        const finalCardName = splitCardName !== undefined ?
+            splitCardName :
+            cardName;
+
         // remove spaces, quotes, and slashes
-        return cardName
+        return finalCardName
             .toLowerCase()
             .replace(/[ '/]/g, '');
     }
@@ -372,8 +497,12 @@
         return LANGUAGE.getTernaryFieldTexts[field];
     }
 
+    function buttonWithName(name) {
+        return $(`three-valued-button[label="${name}"] button`);
+    }
+
     function setButton(name, val) {
-        const $btn = $(`three-valued-button[label="${name}"] button`);
+        const $btn = buttonWithName(name);
 
         // dominion.games has a bug where calling "Clear Selection" resets the state of the buttons,
         // but they appear to not change. So we first click the button to force a re-render.
@@ -404,9 +533,9 @@
 
     function convertButtonState(state) {
         return [
-            LANGUAGE.getTernaryFieldTexts[TernaryField.RANDOM], 
-            LANGUAGE.getTernaryFieldTexts[TernaryField.NO], 
-            LANGUAGE.getTernaryFieldTexts[TernaryField.YES]
+            LANGUAGE.getTernaryFieldTexts[TernaryField.NO],
+            LANGUAGE.getTernaryFieldTexts[TernaryField.YES],
+            LANGUAGE.getTernaryFieldTexts[TernaryField.RANDOM],
         ].findIndex(x => x === state);
     }
 
