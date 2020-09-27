@@ -40,6 +40,43 @@ command.common = {};
         utmSource += '.dev';
     }
 
+    /* i18n */
+
+    const phrases = {
+        CLEAR: 'Clear',
+    };
+    lib.Phrases = phrases;
+
+    const languages = new Map([
+        [ENGLISH.getName(), new Map([
+            [phrases.CLEAR, 'Clear'],
+        ])],
+        [RUSSIAN.getName(), new Map([
+            [phrases.CLEAR, undefined], // need short form of 'Сбросить выделение'
+        ])],
+        [GERMAN.getName(), new Map([
+            [phrases.CLEAR, undefined], // need short form of 'Auswahl entfernen'
+        ])],
+        [FRENCH.getName(), new Map([
+            [phrases.CLEAR, undefined], // need short form of 'Effacer la sélection'
+        ])],
+        [JAPANESE.getName(), new Map([
+            // none
+        ])],
+        [TCHINESE.getName(), new Map([
+            [phrases.CLEAR, undefined], // need short form of '清除已選擇的卡片'
+        ])],
+        [DUTCH.getName(), new Map([
+            // none
+        ])],
+    ]);
+
+    function getLocalized(phrase) {
+        const language = languages.get(LANGUAGE.getName());
+        return language.get(phrase);
+    }
+    lib.getLocalized = getLocalized;
+
     /* tracking helpers */
 
     function setTrackingParams(url, medium) {

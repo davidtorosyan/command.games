@@ -24,6 +24,10 @@ command.random = {};
             }
 
             const $clearButton = $('.clear-kingdom');
+            const clearText = command.common.getLocalized(command.common.Phrases.CLEAR);
+            if (clearText !== undefined) {
+                $clearButton.val(clearText);
+            }
 
             // add a 'Random' button
             const $randomize = $(`<input type="button" class="lobby-button random-kingdom" style="font-size:1.2vw;" value="${LANGUAGE.getPhrase[Phrases.RANDOM]}"></input>`);
