@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2020-09-26
+
+### Added
+
+- Export button.
+
+### Changed
+
+- Refactored code to split into modules.
+
 ## [1.6.0] - 2020-09-21
 
 ### Fixed
@@ -88,7 +98,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - command.games userscript and monkeymaster library
 - extends https://dominion.games/ to have a "Random!" button during card selection
 
-[unreleased]: https://github.com/davidtorosyan/command.games/compare/v1.6.0...HEAD
+[unreleased]: https://github.com/davidtorosyan/command.games/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/davidtorosyan/command.games/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/davidtorosyan/command.games/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/davidtorosyan/command.games/compare/v1.4.1...v1.5.0
 [1.4.1]: https://github.com/davidtorosyan/command.games/compare/v1.4.0...v1.4.1
