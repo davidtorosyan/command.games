@@ -18,10 +18,11 @@ command.export = {};
             console.debug('Found kingdom choices');
 
             // add an 'Export' button
-            const exportText = 'Export'
-            const $export = $(`<input type="button" class="lobby-button export-kingdom" style="font-size:1.2vw;" value="${exportText}"></input>`);
+            const exportText = '◯⇗'
+            const style = 'font-size:1.2vw; letter-spacing: -1em; padding:.8vh 2.1vw .8vh .8vw; position: absolute; transform: translateY(-150%);'
+            const $export = $(`<input type="button" class="lobby-button export-kingdom" style="${style}" value="${exportText}"></input>`);
             $export.on('click', openExport);
-            $export.insertBefore($choices);
+            $export.prependTo($choices);
         });
     }
     lib.setup = setup;
