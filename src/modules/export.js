@@ -19,10 +19,17 @@ command.export = {};
 
             // add an 'Export' button
             const exportText = '◯⇗'
-            const style = 'font-size:1.2vw; letter-spacing: -1em; padding:.8vh 2.1vw .8vh .8vw; position: absolute; transform: translateY(-150%);'
-            const $export = $(`<input type="button" class="lobby-button export-kingdom" style="${style}" value="${exportText}"></input>`);
+            const exportStyle = 'font-size:1.2vw; letter-spacing: -1em; padding:.8vh 2.1vw .8vh .8vw; position: absolute; transform: translateY(-150%)'
+            const $export = $(`<input type="button" class="lobby-button export-kingdom" style="${exportStyle}" value="${exportText}"></input>`);
             $export.on('click', openExport);
             $export.prependTo($choices);
+
+            // not ready yet!
+            // // add an 'Import' button
+            // const importText = '◯⇙'
+            // const importStyle = 'font-size:1.2vw; letter-spacing: -.9em; padding:.8vh 2.1vw .8vh .8vw; position: absolute; transform: translateY(-150%)  translateX(150%);;'
+            // const $import = $(`<input type="button" class="lobby-button import-kingdom" style="${importStyle}" value="${importText}"></input>`);
+            // $import.prependTo($choices);
         });
     }
     lib.setup = setup;
