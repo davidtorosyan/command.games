@@ -23,3 +23,14 @@
 // @grant        GM_listValues
 // @grant        GM_info
 // ==/UserScript==
+
+/*
+    This file handles TamperMonkey setup.
+
+    Note the files listed with @require directives, and follow these rules:
+    1. All files under the modules directory must be included.
+    2. The first three files must be jQuery, monkeymaster, and common (in that order).
+    3. The last file must be main.
+
+    Other than those rules, there should be no dependencies between modules.
+*/
