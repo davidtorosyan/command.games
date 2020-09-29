@@ -8,12 +8,7 @@ import re
 import sys
 import subprocess
 
-def bump(path, changelog, repo, argv, prefix=''):
-    # input
-    if len(argv) < 2 or not argv[1] in ('major', 'minor', 'patch'):
-        sys.exit('Error: specify major, minor, or patch.')
-    change = sys.argv[1]
-
+def bump(path, changelog, repo, change, prefix='', modules=''):
     # helper
     def repo_root():
         return subprocess.Popen(['git', 'rev-parse', '--show-toplevel'], stdout=subprocess.PIPE).communicate()[0].rstrip().decode('utf-8')
@@ -35,6 +30,8 @@ def bump(path, changelog, repo, argv, prefix=''):
 
     # find version and increase
     pattern = re.compile('(^\s*//\s*@version\s+)(\d*)\.(\d*)\.(\d*)(.*\n)')
+    print('(^\s*//\s*@require\s+/{}/\S+/v)(\d*)\.(\d*)\.(\d*)(.*\n)'.format(modules))
+    module_pattern = re.compile('(^\s*//\s*@require\s+\S+/{}/\S+/v)(\d*)\.(\d*)\.(\d*)(.*\n)'.format(modules)) if modules else None
     version_old = None
     version = None
     for line in fileinput.FileInput(from_root(path), inplace=1):
@@ -43,6 +40,11 @@ def bump(path, changelog, repo, argv, prefix=''):
                 start, major, minor, patch, end = match.group(1, 2, 3, 4, 5)
                 version_old = '{}.{}.{}'.format(major, minor, patch)
                 version = update_version(int(major), int(minor), int(patch))
+                line = start + version + end
+                break
+        elif module_pattern:
+            for match in re.finditer(module_pattern, line):
+                start, major, minor, patch, end = match.group(1, 2, 3, 4, 5)
                 line = start + version + end
                 break
         print(line, end='')
