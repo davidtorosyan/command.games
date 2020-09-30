@@ -1,7 +1,7 @@
 // ==LibraryScript==
 // @name         monkeymaster
 // @namespace    https://github.com/davidtorosyan/command.games
-// @version      1.3.1
+// @version      2.0.0
 // @description  common library for TamperMonkey
 // @author       David Torosyan
 // @require      https://code.jquery.com/jquery-3.4.1.min.js
@@ -45,25 +45,6 @@ const monkeymaster = {};
     console.log('Loaded');
 
     /* Query params */
-
-    // @deprecated in favor of getWindowQueryParam and setWindowQueryParam
-    // Get the value of a query param.
-    // @param string name: the name of the query param
-    // @param bool remove: whether or not to remove the query param after reading it
-    // @returns string: the value of the query param
-    function getQueryParameter(name, remove) {
-        var match = RegExp(`([?]|.*[&])${name}=([^&\n]*)&?(.*)`).exec(window.location.search);
-        if (match) {
-            if (remove) {
-                var search = match[1] + match[3];
-                var newPath = window.location.pathname + (search === '?' ? '' : search);
-                window.history.replaceState(null, null, newPath);
-            }
-            return decodeURIComponent(match[2].replace(/\+/g, ' '));
-        }
-        return '';
-    }
-    lib.getQueryParameter = getQueryParameter;
 
     // Get the value of a query param.
     // @param string url: the url to get from
@@ -253,12 +234,13 @@ const monkeymaster = {};
         const request = GM_getValue(formatJobRequestKey(jobId));
         if (request === undefined) {
             console.log(`Job already cleaned up: ${jobId}`);
-            return;
+            return false;
         }
         GM_removeValueChangeListener(request.listenerId);
         GM_deleteValue(formatJobRequestKey(jobId));
         GM_deleteValue(formatJobResponseKey(jobId));
         $(`#${jobId}`).remove();
+        return true;
     }
 
     // Clean up old job data.
@@ -307,6 +289,14 @@ const monkeymaster = {};
         defaultJobNamespace = namespace;
     }
     lib.setupJobs = setupJobs;
+
+    // error codes
+    const errorCodes = {
+        TIMEOUT: 'Timeout',
+        UNEXPECTED: 'Unexpected',
+        RETRYABLE: 'Retryable',
+    }
+    lib.errorCodes = errorCodes;
     
     // Queue up a job for another page to execute.
     // Essentially enables cross-site scripting. See executeJob for the other half.
@@ -318,15 +308,15 @@ const monkeymaster = {};
     //  object param: a parameter to pass to the job
     //  number cleanupDelayMs: how long to wait before cleaning the iFrame and listener, defaults to 15 seconds. Use -1 to skip cleanup.
     //  string namespace: the unique identifier for these jobs, not required if setupJobs is used
-    //  @deprecated bool skipCleanupOnCompletion: if true, don't clean up as soon as the job completes
     //  number completionCleanupDelayMs: how long to wait before cleaning up, undefined means instant, -1 means skip cleanup.
+    //  func failure: a callback to call upon failure with an error code
     function queueJob(url, callback, options = {}) {
         // setup
         const param = options.param;
         const cleanupDelayMs = options.cleanupDelayMs === undefined ? secondsToMilliseconds(15) : options.cleanupDelayMs;
         const namespace = options.namespace || defaultJobNamespace;
-        const skipCleanupOnCompletion = options.skipCleanupOnCompletion === true;
         const completionCleanupDelayMs = options.completionCleanupDelayMs;
+        const failureCallback = options.failure;
         assertSetup(namespace);
 
         // create job metadata and listener
@@ -334,7 +324,7 @@ const monkeymaster = {};
         console.log(`Creating job: ${jobId}`);
         const listenerId = GM_addValueChangeListener(formatJobResponseKey(jobId), (name, _, response) => {
             console.log(`Completed job: ${jobId}`);
-            if (!skipCleanupOnCompletion && completionCleanupDelayMs !== -1) {
+            if (completionCleanupDelayMs !== -1) {
                 if (completionCleanupDelayMs === undefined) {
                     cleanupJob(jobId);
                 }
@@ -342,11 +332,21 @@ const monkeymaster = {};
                     setTimeout(() => cleanupJob(jobId), completionCleanupDelayMs);
                 }
             }
-            try {
-                callback(response.result);
+            if (response.failed) {
+                try {
+                    failureCallback(response.errorCode);
+                }
+                catch (ex) {
+                    console.error(`Error executing job failure callback: ${ex}`);
+                }
             }
-            catch (ex) {
-                console.error(`Error executing job callback: ${ex}`);
+            else {
+                try {
+                    callback(response.result);
+                }
+                catch (ex) {
+                    console.error(`Error executing job callback: ${ex}`);
+                }
             }
         });
 
@@ -370,7 +370,16 @@ const monkeymaster = {};
 
         // cleanup
         if (cleanupDelayMs !== -1) {
-            setTimeout(() => cleanupJob(jobId), cleanupDelayMs);
+            setTimeout(() => {
+                if (cleanupJob(jobId) && failureCallback !== undefined) {
+                    try {
+                        failureCallback(errorCodes.TIMEOUT);
+                    }
+                    catch (ex) {
+                        console.error(`Error executing job failure callback on timeout: ${ex}`);
+                    }
+                }
+            }, cleanupDelayMs);
         }
     }
     lib.queueJob = queueJob;
@@ -406,15 +415,34 @@ const monkeymaster = {};
             return;
         }
 
+        function wrapResult(result) {
+            return {
+                result,
+                date: new Date().toJSON(),
+                failed: false,
+            };
+        }
+
+        function wrapError(errorCode) {
+            return {
+                date: new Date().toJSON(),
+                errorCode,
+                failed: true,
+            };
+        }
+
         // execute
         console.log(`Executing job: ${jobId}`);
-        callback(request.param, result => {
-            const response = {
-                result,
-                date: new Date().toJSON()
-            };
-            GM_setValue(formatJobResponseKey(jobId), response);
-        });
+        try {
+            callback(
+                request.param, 
+                result => GM_setValue(formatJobResponseKey(jobId), wrapResult(result)),
+                errorCode => GM_setValue(formatJobResponseKey(jobId), wrapError(errorCode)));
+        }
+        catch (ex) {
+            console.error(`Error executing job: ${ex}`);
+            GM_setValue(formatJobResponseKey(jobId), wrapError(errorCodes.UNEXPECTED));
+        }
     }
     lib.executeJob = executeJob;
 

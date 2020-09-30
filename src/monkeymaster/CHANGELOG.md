@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2020-09-29
+
+*Note: This release has breaking changes.*
+
+### Changed
+
+- Added failure callbacks to queueJob and executeJob (this slightly changes behavior)
+
+### Removed
+- getQueryParameter helper
+- skipCleanupOnCompletion option for queueJob
+
 ## [1.3.1] - 2020-09-21
 
 ### Fixed
@@ -53,7 +65,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - monkeymaster library
 
-[unreleased]: https://github.com/davidtorosyan/command.games/compare/monkeymaster-v1.3.1...HEAD
+[unreleased]: https://github.com/davidtorosyan/command.games/compare/monkeymaster-v2.0.0...HEAD
+[2.0.0]: https://github.com/davidtorosyan/command.games/compare/monkeymaster-v1.3.1...v2.0.0
 [1.3.1]: https://github.com/davidtorosyan/command.games/compare/monkeymaster-v1.3.0...v1.3.1
 [1.3.0]: https://github.com/davidtorosyan/command.games/compare/monkeymaster-v1.2.0...v1.3.0
 [1.2.0]: https://github.com/davidtorosyan/command.games/compare/monkeymaster-v1.1.0...v1.2.0
