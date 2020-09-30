@@ -37,7 +37,7 @@
             }
         });
     }, {
-        nojob: monkeymaster.removeTrackingParams
+        nojob: command.common.removeTrackingParams
     });
 
     // make sure that sets not included in dominion.games are not considered

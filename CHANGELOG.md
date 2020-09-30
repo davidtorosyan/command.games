@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.1] - 2020-09-29
+
+### Fixed
+
+- Fixed URL regression introduced in v1.7.0
+
 ## [1.8.0] - 2020-09-29
 
 ### Added
@@ -112,7 +118,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - command.games userscript and monkeymaster library
 - extends https://dominion.games/ to have a "Random!" button during card selection
 
-[unreleased]: https://github.com/davidtorosyan/command.games/compare/v1.8.0...HEAD
+[unreleased]: https://github.com/davidtorosyan/command.games/compare/v1.8.1...HEAD
+[1.8.1]: https://github.com/davidtorosyan/command.games/compare/v1.8.0...v1.8.1
 [1.8.0]: https://github.com/davidtorosyan/command.games/compare/v1.7.0...v1.8.0
 [1.7.0]: https://github.com/davidtorosyan/command.games/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/davidtorosyan/command.games/compare/v1.5.0...v1.6.0
