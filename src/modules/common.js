@@ -30,9 +30,11 @@ command.common = {};
     lib.SHOW_IFRAME = false;
     lib.SHOW_OPTIONS = false;
 
+    // logging
+    const console = monkeymaster.setupConsole('command.common');
+    console.debug('Loaded');
+
     // setup the helper library
-    const console = monkeymaster.setupConsole('command.games');
-    console.log('Loaded');
     monkeymaster.setupJobs('command.games');
 
     if (lib.DEVELOPER_MODE) {
@@ -101,35 +103,78 @@ command.common = {};
 
     /* button helpers */
 
-    function getButtonValue($btn) {
-        return $btn.text().split(':')[1].trim();
-    }
-    lib.getButtonValue = getButtonValue;
+    function getButton(name) {
+        const $btn = $(`three-valued-button[label="${name}"] button`);
+        const button = {};
 
-    function getButtonLabel(bool) {
-        const field = bool ? TernaryField.YES : TernaryField.NO;
-        return LANGUAGE.getTernaryFieldTexts[field];
-    }
-    lib.getButtonLabel = getButtonLabel;
+        const valueToTernaryMap = new Map([
+            [LANGUAGE.getTernaryFieldTexts[TernaryField.NO], TernaryField.NO],
+            [LANGUAGE.getTernaryFieldTexts[TernaryField.YES], TernaryField.YES],
+            [LANGUAGE.getTernaryFieldTexts[TernaryField.RANDOM], TernaryField.RANDOM],
+        ]);
 
-    function convertButtonState(state) {
-        return [
-            LANGUAGE.getTernaryFieldTexts[TernaryField.NO],
-            LANGUAGE.getTernaryFieldTexts[TernaryField.YES],
-            LANGUAGE.getTernaryFieldTexts[TernaryField.RANDOM],
-        ].findIndex(x => x === state);
-    }
-    lib.convertButtonState = convertButtonState;
+        const ternaryToBitMap = new Map([
+            [TernaryField.NO, 0],
+            [TernaryField.YES, 1],
+        ]);
 
-    function buttonWithName(name) {
-        return $(`three-valued-button[label="${name}"] button`);
-    }
-    lib.buttonWithName = buttonWithName;
+        const boolToTernaryMap = new Map([
+            [false, TernaryField.NO],
+            [true, TernaryField.YES],
+        ]);
 
-    function getButtonState(name) {
-        return convertButtonState(getButtonValue(buttonWithName(name)));
+        const ternaryOrder = [
+            TernaryField.NO,
+            TernaryField.YES,
+            TernaryField.RANDOM,
+        ];
+
+        function getValue() {
+            return $btn.text().split(':')[1].trim();
+        }
+
+        function getTernary() {
+            return valueToTernaryMap.get(getValue());
+        }
+
+        function getBit() {
+            return ternaryToBitMap.get(getTernary());
+        }
+        button.getBit = getBit;
+
+        function setBool(bool) {
+            // dominion.games has a bug where calling "Clear Selection" resets the state of the buttons,
+            // but they appear to not change. So we first click the button to force a re-render.
+            $btn.click();
+
+            const desiredTernary = boolToTernaryMap.get(bool);
+            const desiredTernaryName = LANGUAGE.getTernaryFieldTexts[desiredTernary];
+
+            const currentTernary = getTernary();
+            
+            const desiredIndex = ternaryOrder.indexOf(desiredTernary);
+            const currentIndex = ternaryOrder.indexOf(currentTernary);
+
+            let clicksNeeded = desiredIndex - currentIndex;
+            if (clicksNeeded < 0) {
+                clicksNeeded += 3;
+            }
+
+            if (clicksNeeded === 0) {
+                console.debug(`Button '${name}' is already on '${desiredTernaryName}'`);
+            }
+            else {
+                for (let i = 0; i < clicksNeeded; i++) {
+                    $btn.click();
+                }
+                console.debug(`Clicked button '${name}' ${clicksNeeded} times to get to '${desiredTernaryName}'`);
+            }
+        }
+        button.setBool = setBool;
+
+        return button;
     }
-    lib.getButtonState = getButtonState;
+    lib.getButton = getButton;
 
     /* card name helpers */
 

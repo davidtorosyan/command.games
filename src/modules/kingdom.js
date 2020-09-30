@@ -7,6 +7,10 @@
 (function() {
     'use strict';
 
+    // logging
+    const console = monkeymaster.setupConsole('command.kingdom');
+    console.debug('Loaded');
+    
     /* dominionrandomizer.com */
 
     // This section handles randomization.
@@ -15,32 +19,38 @@
     if (window.location.host.indexOf(command.common.randomizerDomain) === -1) {
         return;
     }
-        
+
+    const deprecatedSets = new Map([
+        ['baseset', 'baseset2'],
+        ['intrigue', 'intrigue2'],
+    ]);
+
     // run this callback when a job is found
     // tweak the settings, grab the card list, and return
-    monkeymaster.executeJob((param, callback) => {
+    monkeymaster.executeJob((param, callback, failureCallback) => {
         $(document).ready(function() {
-            ensureDeprecatedSetsAreUnchecked(() => {
+            if (uncheckDeprecatedSets()) {
+                failureCallback(monkeymaster.errorCodes.RETRYABLE);
+            }
+            else {
                 callback(getCardList());
-            });
+            }
         });
     }, {
         nojob: monkeymaster.removeTrackingParams
     });
 
     // make sure that sets not included in dominion.games are not considered
-    function ensureDeprecatedSetsAreUnchecked(callback) {
-        let shouldShuffle = false;
-        shouldShuffle |= replaceSet('baseset', 'baseset2');
-        shouldShuffle |= replaceSet('intrigue', 'intrigue2');
-        if (shouldShuffle) {
-            randomize(callback);
+    // return true if any changes were made
+    function uncheckDeprecatedSets() {
+        let changedSets = false;
+        for (let [original, updated] of deprecatedSets) {
+            changedSets |= replaceSet(original, updated);
         }
-        else {
-            callback();
-        }
+        return changedSets;
     }
 
+    // return true if any changes were made
     function replaceSet(original, updated) {
         const $baseSet = $(`#${original}`);
         if ($baseSet.prop('checked')) {
@@ -53,21 +63,6 @@
             return true;
         }
         return false;
-    }
-
-    function randomize(callback) {
-        console.log('Randomizing');
-        
-        // clear the URL due to this bug:
-        // https://github.com/blakevanlan/KingdomCreator/issues/51
-        window.history.pushState({}, document.title, '/');
-
-        // set a hash so we can monitor the URL update
-        window.location.hash = 'tmp';
-        $(window).on('hashchange', callback);
-        
-        // hit the randomize button
-        $('.desktop_randomize-button')[0].click();
     }
 
     // grab the card info from the URL query params

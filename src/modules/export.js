@@ -12,6 +12,10 @@ command.export = {};
     // rename the object to lib to allow easy renaming
     const lib = command.export;
 
+    // logging
+    const console = monkeymaster.setupConsole('command.export');
+    console.debug('Loaded');
+
     function setup() {
         // every time the user navigates to the "choose cards" page,
         $.onExists('.kingdom-choices', $choices => {
@@ -33,12 +37,19 @@ command.export = {};
     }
     lib.setup = setup;
 
-    function openExport() {
+    function getSelectedKingdomUrl() {
         const supply = getSelectedCards($('.selected-card .mini-card-art'));
         const landscapes = getSelectedLandscapesWithType($('.selected-cards .landscape-art'));
-        const colonies = command.common.getButtonState(LANGUAGE.getLobbyButtons.SELECT_COLONIES);
-        const shelters = command.common.getButtonState(LANGUAGE.getLobbyButtons.SELECT_SHELTERS);
-        const url = command.common.setTrackingParams(getExportUrl(command.common.randomizerUrl, supply, landscapes, colonies, shelters), 'export');
+        const colonies = command.common.getButton(LANGUAGE.getLobbyButtons.SELECT_COLONIES).getBit();
+        const shelters = command.common.getButton(LANGUAGE.getLobbyButtons.SELECT_SHELTERS).getBit();
+        const url = getExportUrl(command.common.randomizerUrl, supply, landscapes, colonies, shelters);
+        return url;
+    }
+    lib.getSelectedKingdomUrl = getSelectedKingdomUrl;
+
+    function openExport() {
+        const url = command.common.setTrackingParams(getSelectedKingdomUrl(), 'export');
+        console.log(`Exporting url: ${url}`);
         openLinkInNewTab(url);
     }
 
@@ -82,11 +93,11 @@ command.export = {};
             retval = monkeymaster.setQueryParam(retval, normalizedLandscapeType, cards.join(','));
         }
 
-        if (colonies != 2) {
+        if (colonies !== undefined) {
             retval = monkeymaster.setQueryParam(retval, 'colonies', colonies);
         }
         
-        if (shelters != 2) {
+        if (shelters !== undefined) {
             retval = monkeymaster.setQueryParam(retval, 'shelters', shelters);
         }
         

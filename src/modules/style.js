@@ -9,6 +9,10 @@ command.style = {};
 (function() {
     'use strict';
 
+    // logging
+    const console = monkeymaster.setupConsole('command.style');
+    console.debug('Loaded');    
+
     // rename the object to lib to allow easy renaming
     const lib = command.style;
 

@@ -7,6 +7,10 @@
 (function() {
     'use strict';
 
+    // logging
+    const console = monkeymaster.setupConsole('command.main');
+    console.debug('Loaded');
+
     /* dominion.games */
 
     if (window.location.host.indexOf(command.common.hostDomain) === -1) {

@@ -12,6 +12,10 @@ command.background = {};
     // rename the object to lib to allow easy renaming
     const lib = command.background;
 
+    // logging
+    const console = monkeymaster.setupConsole('command.background');
+    console.debug('Loaded');
+
     function setup() {
         $.onExists('div[ng-if="lobby.tab.userPrefTab"]', () => {
             console.debug('Found preferences');

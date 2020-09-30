@@ -9,6 +9,10 @@ command.random = {};
 (function() {
     'use strict';
 
+    // logging
+    const console = monkeymaster.setupConsole('command.random');
+    console.debug('Loaded');
+    
     // rename the object to lib to allow easy renaming
     const lib = command.random;
 
@@ -73,20 +77,44 @@ command.random = {};
         if (randomizerCancelTokenSource !== undefined) {
             randomizerCancelTokenSource.cancel();
         }
+
         randomizerCancelTokenSource = monkeymaster.cancelTokenSource();
-        const $randomize = $('.random-kingdom');
-        $randomize.val(LANGUAGE.getTableStatus[TableStati.RUNNING]);
+        const $randomButton = $('.random-kingdom');
+        $randomButton.val(LANGUAGE.getTableStatus[TableStati.RUNNING]);
+
         randomize(randomizerCancelTokenSource.getToken(), () => {
-            $randomize.val(LANGUAGE.getPhrase[Phrases.RANDOM]);
+            $randomButton.val(LANGUAGE.getPhrase[Phrases.RANDOM]);
         });
     }
 
     // randomize! see executeJob at the top of the script for how we get data from the other site.
     function randomize(cancelToken, callback) {
         console.log('Random!');
-        clearCards();
-        const url = command.common.setTrackingParams(command.common.randomizerUrl, 'button');
-        monkeymaster.queueJob(url, result => {
+
+        let url;
+        const isPartial = isPartialKingdom();
+        if (isPartial) {
+            url = command.export.getSelectedKingdomUrl();
+            console.log(`Detected partial kingdom, randomizing from starting point: ${url}`);
+        }
+        else {
+            url = command.common.randomizerUrl;
+        }
+        
+        url = command.common.setTrackingParams(url, 'button');
+        runRandomizer(cancelToken, callback, url, isPartial, true);
+    }
+
+    function runRandomizer(cancelToken, callback, url, isPartial, retryable) {
+        monkeymaster.queueJob(url, getResultHandler(cancelToken, callback, isPartial), {
+            completionCleanupDelayMs: 100, // give analytics a chance to fire
+            cleanupDelayMs: command.common.DEVELOPER_MODE && command.common.SHOW_IFRAME ? -1 : undefined,
+            failure: getFailureHandler(cancelToken, callback, url, isPartial, retryable),
+        });
+    }
+
+    function getResultHandler(cancelToken, callback, isPartial) {
+        return result => {
             cancelToken.throwIfCanceled();
 
             // get the response
@@ -102,18 +130,40 @@ command.random = {};
             // map them back to their original names
             const originalCardNames = getOriginalCardNames(cards);
 
+            // clear the current selection if we're starting with a full or empty kingdom
+            if (!isPartial) {
+                clearCards();
+            }
+
             // make the selections
-            setButton(LANGUAGE.getLobbyButtons.SELECT_COLONIES, command.common.getButtonLabel(result.cards.colonies));
-            setButton(LANGUAGE.getLobbyButtons.SELECT_SHELTERS, command.common.getButtonLabel(result.cards.shelters));
+            command.common.getButton(LANGUAGE.getLobbyButtons.SELECT_COLONIES).setBool(result.cards.colonies);
+            command.common.getButton(LANGUAGE.getLobbyButtons.SELECT_SHELTERS).setBool(result.cards.shelters);
             selectCards(originalCardNames, cancelToken);
             if (callback !== undefined) {
                 callback();
             }
-        }, {
-            completionCleanupDelayMs: 100, // give analytics a chance to fire
-            skipCleanupOnCompletion: command.common.DEVELOPER_MODE && command.common.SHOW_IFRAME,
-            cleanupDelayMs: command.common.DEVELOPER_MODE && command.common.SHOW_IFRAME ? -1 : undefined,
-        });
+        }
+    }
+
+    function getFailureHandler(cancelToken, callback, url, isPartial, retryable) {
+        return errorCode => {
+            console.error(`Failed with errorcode: ${errorCode}`);
+            if (errorCode === monkeymaster.errorCodes.RETRYABLE) {
+                if (retryable) {
+                    console.log('Retrying.');
+                    runRandomizer(cancelToken, callback, url, isPartial, false);
+                    return;
+                }
+                console.warn('Hit retry limit.');
+            }
+            callback();
+        }
+    }
+
+    function isPartialKingdom() {
+        // only consider the supply pile
+        const selectedCardCount = $('.selected-card .mini-card-art').length;
+        return selectedCardCount > 0 && selectedCardCount < 10;
     }
 
     function clearCards() {
@@ -156,31 +206,31 @@ command.random = {};
         return cardNames;
     }
 
-    function setButton(name, val) {
-        const $btn = command.common.buttonWithName(name);
+    // function setButton(name, val) {
+    //     const $btn = command.common.buttonWithName(name);
 
-        // dominion.games has a bug where calling "Clear Selection" resets the state of the buttons,
-        // but they appear to not change. So we first click the button to force a re-render.
-        $btn.click();
+    //     // dominion.games has a bug where calling "Clear Selection" resets the state of the buttons,
+    //     // but they appear to not change. So we first click the button to force a re-render.
+    //     $btn.click();
 
-        const current = command.common.getButtonValue($btn);
-        let state = command.common.convertButtonState(current);
-        const desired = command.common.convertButtonState(val);
-        if (desired === -1 || state === -1) {
-            console.error(`Can't set button '${name}' from '${current}' to '${val}'`);
-            return;
-        }
-        if (desired === state) {
-            console.log(`Button '${name}' is already on '${val}'`);
-            return;
-        }
-        while (state !== desired) {
-            console.log(`Clicking button '${name}'`);
-            $btn.click();
-            state += 1;
-            state %= 3;
-        }
-    }
+    //     const current = command.common.getButtonValue($btn);
+    //     let state = command.common.convertButtonState(current);
+    //     const desired = command.common.convertButtonState(val);
+    //     if (desired === -1 || state === -1) {
+    //         console.error(`Can't set button '${name}' from '${current}' to '${val}'`);
+    //         return;
+    //     }
+    //     if (desired === state) {
+    //         console.debug(`Button '${name}' is already on '${val}'`);
+    //         return;
+    //     }
+    //     while (state !== desired) {
+    //         console.debug(`Clicking button '${name}'`);
+    //         $btn.click();
+    //         state += 1;
+    //         state %= 3;
+    //     }
+    // }
 
     function selectCards(cardNames, cancelToken) {
         cancelToken.throwIfCanceled();
