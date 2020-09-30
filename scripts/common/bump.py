@@ -30,7 +30,6 @@ def bump(path, changelog, repo, change, prefix='', modules=''):
 
     # find version and increase
     pattern = re.compile('(^\s*//\s*@version\s+)(\d*)\.(\d*)\.(\d*)(.*\n)')
-    print('(^\s*//\s*@require\s+/{}/\S+/v)(\d*)\.(\d*)\.(\d*)(.*\n)'.format(modules))
     module_pattern = re.compile('(^\s*//\s*@require\s+\S+/{}/\S+/v)(\d*)\.(\d*)\.(\d*)(.*\n)'.format(modules)) if modules else None
     version_old = None
     version = None
