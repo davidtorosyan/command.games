@@ -1,7 +1,7 @@
 // ==LibraryScript==
 // @name         monkeymaster
 // @namespace    https://github.com/davidtorosyan/command.games
-// @version      2.0.0
+// @version      2.1.0
 // @description  common library for TamperMonkey
 // @author       David Torosyan
 // @require      https://code.jquery.com/jquery-3.4.1.min.js
@@ -462,12 +462,15 @@ const monkeymaster = {};
     //  bool direct: true to only include direct children
     //  bool once: true to only run once, and then remove the listener
     //  number delayMs: use this to run the callback in a timeout
+    //  bool onRemoval: true to trigger the callback on removals as well
+    // @return func: a function to cancel the observer
     function onExists(selector, callback, options = {}) {
         // setup
         const target = options.target || document.documentElement;
         const subtree = !(options.direct === true);
         const once = options.once === true;
         const delayMs = options.delayMs;
+        const onRemoval = options.onRemoval === true;
         
         // the actual callback when a node is found
         const finalCallback = function(node) {
@@ -488,6 +491,22 @@ const monkeymaster = {};
                 return;
             }
         }
+
+        // helper to apply a selector
+        const findInNode = function(node) {
+            let $node = $(node);
+            let result = undefined;
+            if ($node.is(selector)) {
+                result = node;
+            }
+            else if (subtree) {
+                const $searchResult = $node.find(selector);
+                if ($searchResult.length > 0) {
+                    result = $searchResult[0];
+                }
+            }
+            return result;
+        };
         
         // Important note about MutationObserver:
         // It only triggers for added elements, not all their children.
@@ -495,34 +514,42 @@ const monkeymaster = {};
         const observer = new MutationObserver(function (mutations, obv) {
             for (let mutation of mutations) {
                 for (let addedNode of mutation.addedNodes) {
-                    let $addedNode = $(addedNode);
-                    let result = undefined;
-                    if ($addedNode.is(selector)) {
-                        result = addedNode;
-                    }
-                    else if (subtree) {
-                        const $searchResult = $addedNode.find(selector);
-                        if ($searchResult.length > 0) {
-                            result = $searchResult[0];
-                        }
-                    }
+                    const result = findInNode(addedNode);
                     if (result !== undefined) {
+                        console.debug(`Element with selector '${selector}' added.`)
                         if (once) {
                             obv.disconnect();
                         }
-                        console.debug(`Element with selector '${selector}' added.`)
                         finalCallback(result);
                         if (once) {
                             return;
                         }
                     }
                 }
+                if (onRemoval) {
+                    for (let removedNode of mutation.removedNodes) {
+                        const result = findInNode(removedNode);
+                        if (result !== undefined) {
+                            console.debug(`Element with selector '${selector}' removed.`)
+                            if (once) {
+                                obv.disconnect();
+                            }
+                            finalCallback(result);
+                            if (once) {
+                                return;
+                            }
+                        }
+                    }
+                }
             }
         });
+
         observer.observe(target, {
             childList: true,
             subtree: subtree
         });
+
+        return function () { observer.disconnect() };
     }
     lib.onExists = onExists;
 

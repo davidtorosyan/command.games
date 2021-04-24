@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2021-04-23
+### Added
+- onRemoval parameter to onExists, and a return value to cancel the observer
+
 ## [2.0.0] - 2020-09-29
 
 *Note: This release has breaking changes.*
@@ -65,7 +69,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - monkeymaster library
 
-[unreleased]: https://github.com/davidtorosyan/command.games/compare/monkeymaster-v2.0.0...HEAD
+[unreleased]: https://github.com/davidtorosyan/command.games/compare/monkeymaster-v2.1.0...HEAD
+[2.1.0]: https://github.com/davidtorosyan/command.games/compare/monkeymaster-v2.0.0...v2.1.0
 [2.0.0]: https://github.com/davidtorosyan/command.games/compare/monkeymaster-v1.3.1...v2.0.0
 [1.3.1]: https://github.com/davidtorosyan/command.games/compare/monkeymaster-v1.3.0...v1.3.1
 [1.3.0]: https://github.com/davidtorosyan/command.games/compare/monkeymaster-v1.2.0...v1.3.0
