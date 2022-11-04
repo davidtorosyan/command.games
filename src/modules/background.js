@@ -17,7 +17,7 @@ command.background = {};
     console.debug('Loaded');
 
     function setup() {
-        $.onExists('div[ng-if="lobby.tab.userPrefTab"]', () => {
+        $.onExists('div.user-pref-scroll-container', () => {
             console.debug('Found preferences');
 
             const tooltipId = 'background-tooltip';
@@ -27,19 +27,23 @@ command.background = {};
             }
 
             const $label = $(`label:contains("${LANGUAGE.getUserPreferences[UserPrefIds.PREFERRED_BACKGROUND]}")`);
-            const $pref = $label.next();
+            const $pref = $label.parent();
             const $input = $pref.find('input');
 
-            const $img = $('<img src="swamp-hag.jpg" width="400px"></img>');
+            const $img = $('<img src="" width="400px"></img>');
             const $text = $('<span class="tooltiptext" style="left:50%; top: initial; bottom:100%; width:auto; font-size: 1.2vw;"></span>');
-            const $tooltip = $(`<div class="tooltip" id=${tooltipId} style="display:block"></div>`);
+            const $tooltip = $(`<div class="table-tooltip hidden" id=${tooltipId}></div>`);
             $text.append($img);
             $tooltip.append($text);
-            $tooltip.append($pref);
+
             $tooltip.insertAfter($label);
 
+            $input.parent()
+                .mouseover(() => $tooltip.show())
+                .mouseleave(() => $tooltip.hide())
+
             const setImage = setImageFunc($input, $img);
-            $input.on('change', setImage);
+            $input.parent().on('click', setImage)
             setImage();
         });
     }
@@ -59,11 +63,16 @@ command.background = {};
     function setImageFunc($input, $img) {
         return () => {
             const chosen = parseInt($input.val());
-            if (chosen === 0) {
+            if (chosen === undefined || isNaN(chosen)) {
+                console.debug('Unable to parse chosen image')
+            }
+            else if (chosen === 0) {
+                console.debug(`Chosen image is 0, hiding.`)
                 $img.prop('style', 'visibility: hidden;');
             }
             else {
                 const name = imageList[chosen-1];
+                console.debug(`Chosen image: ${chosen}, which is ${name}`)
                 $img.prop('style', '');
                 $img.prop('src', `images/large/${name}`);
             }
